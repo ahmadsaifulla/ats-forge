@@ -1,8 +1,0 @@
-SUMMARY
-Hardware Technician with experience in server maintenance and network setup.
-
-EXPERIENCE
-- Installed and configured rack servers in data centers.
-- Troubleshot hardware failures and replaced faulty RAM modules.
-- Managed Ethernet cabling and network switch configurations.
-- Monitored server temperature and power consumption.

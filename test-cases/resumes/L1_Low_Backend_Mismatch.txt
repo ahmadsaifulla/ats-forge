@@ -1,8 +1,0 @@
-SUMMARY
-Customer Support Lead with experience in managing technical tickets and client satisfaction.
-
-EXPERIENCE
-- Managed a team of 10 support agents.
-- Resolved 50+ tickets daily related to software login issues.
-- Used Zendesk and Jira to track customer issues.
-- Improved customer satisfaction scores by 15% over two years.

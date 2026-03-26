@@ -1,8 +1,0 @@
-SUMMARY
-Manual QA Tester with an eye for detail and bug tracking.
-
-EXPERIENCE
-- Performed manual regression testing on mobile apps.
-- Logged bugs in Jira and verified fixes with the dev team.
-- Wrote test cases based on functional requirements.
-- Checked user interface for consistency and alignment.
