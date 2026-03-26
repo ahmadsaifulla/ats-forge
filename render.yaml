@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: ats-forge-api
+    env: docker
+    rootDir: backend
+    plan: starter
+    healthCheckPath: /health
