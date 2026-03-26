@@ -1,6 +1,14 @@
 """Unit tests for text utilities."""
 
-from app.utils.text import extract_keywords, extract_sections, measurable_achievement_count, normalize_text
+from app.utils.text import (
+    expand_abbreviations,
+    extract_keywords,
+    extract_sections,
+    infer_semantic_skills,
+    measurable_achievement_count,
+    normalize_keyword,
+    normalize_text,
+)
 
 
 def test_normalize_text_removes_noise():
@@ -28,3 +36,15 @@ def test_extract_keywords_filters_low_signal_terms(sample_job_description: str):
 
 def test_measurable_achievement_count_detects_metrics(sample_resume_text: str):
     assert measurable_achievement_count(sample_resume_text) == 2
+
+
+def test_abbreviation_expansion_and_normalization():
+    assert "machine learning" in expand_abbreviations("ML engineer")
+    assert normalize_keyword("JS") == "javascript"
+
+
+def test_infer_semantic_skills_identifies_grouped_terms():
+    inferred = infer_semantic_skills("Built ATS dashboards and NLP workflows.")
+
+    assert "applicant tracking systems" in inferred
+    assert "natural language processing" in inferred

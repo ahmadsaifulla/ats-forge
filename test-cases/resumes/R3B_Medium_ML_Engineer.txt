@@ -1,0 +1,22 @@
+SUMMARY
+Software Developer with a strong interest in Machine Learning. Proficient in Python and data structures.
+
+SKILLS
+Python, Java, SQL
+Scikit-learn, NumPy, Pandas
+Data Analysis, Linear Algebra, Statistics
+
+EXPERIENCE
+Python Developer | Software Solutions
+- Built web scrapers to collect data for analysis using Python.
+- Used Scikit-learn to build a basic recommendation engine for a client project.
+- Focused on clean code and Object Oriented Programming principles.
+- Worked on a team to develop internal tools for data visualization.
+- Integrated third-party APIs into existing software products.
+
+Graduate Assistant | University Lab
+- Assisted in cleaning large datasets for research purposes.
+- Ran basic statistical tests using Python libraries.
+
+EDUCATION
+B.S. in Computer Science

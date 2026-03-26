@@ -1,0 +1,21 @@
+Role: ML Engineer
+Seniority: Junior
+
+Technical Requirements:
+- Strong foundation in Machine Learning (ML) algorithms and deep learning frameworks (PyTorch or TensorFlow).
+- Experience with Computer Vision or Natural Language Processing (NLP).
+- Proficiency in Python and Object Oriented Programming (OOP).
+- Familiarity with Scikit-learn and model evaluation metrics.
+
+Domain Terms:
+- Model Deployment
+- Inference Latency
+- Feature Engineering
+
+Soft Skills:
+- Problem Solving
+- Research Aptitude
+
+Structure Expectations:
+- Experiment Tracking
+- Model Performance dashboards

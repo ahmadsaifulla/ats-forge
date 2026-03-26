@@ -51,7 +51,7 @@ def test_upload_rejects_empty_file(client: TestClient):
     )
 
     assert response.status_code == 400
-    assert "empty" in response.json()["detail"].lower()
+    assert "empty" in response.json()["reason"].lower()
 
 
 def test_analyze_rejects_short_job_description(client: TestClient, sample_docx_bytes: bytes):
@@ -73,6 +73,7 @@ def test_analyze_rejects_short_job_description(client: TestClient, sample_docx_b
     )
 
     assert response.status_code == 422
+    assert response.json()["error"] == "validation_error"
 
 
 def test_upload_rejects_huge_file(client: TestClient):
@@ -83,4 +84,4 @@ def test_upload_rejects_huge_file(client: TestClient):
     )
 
     assert response.status_code == 400
-    assert "limit" in response.json()["detail"].lower()
+    assert "limit" in response.json()["reason"].lower()

@@ -1,5 +1,7 @@
 """Unit tests for ATS scoring."""
 
+import pytest
+
 from app.nlp.scoring import ATSScoringService
 
 
@@ -13,6 +15,8 @@ def test_scoring_returns_breakdown(sample_resume_text: str, sample_job_descripti
     assert analysis.breakdown.keyword_score > 0
     assert analysis.breakdown.structure_score > 0
     assert "keyword optimization" in analysis.missing_keywords
+    assert analysis.keyword_insights.skill_frequencies
+    assert analysis.keyword_insights.stuffing_penalty >= 0
 
 
 def test_scoring_handles_irrelevant_job_description(sample_resume_text: str):
@@ -23,3 +27,23 @@ def test_scoring_handles_irrelevant_job_description(sample_resume_text: str):
 
     assert analysis.breakdown.keyword_score < 30
     assert len(analysis.missing_keywords) > 0
+
+
+@pytest.mark.parametrize("resume_index", list(range(10)))
+@pytest.mark.parametrize("job_index", list(range(5)))
+def test_scoring_is_deterministic_across_resume_and_job_catalogs(
+    resume_catalog: list[str],
+    job_description_catalog: list[str],
+    resume_index: int,
+    job_index: int,
+):
+    service = ATSScoringService()
+    resume_text = resume_catalog[resume_index]
+    job_description = job_description_catalog[job_index]
+
+    first = service.analyze("resume-x", resume_text, job_description)
+    second = service.analyze("resume-x", resume_text, job_description)
+
+    assert first.total_score == second.total_score
+    assert first.breakdown == second.breakdown
+    assert first.keyword_insights == second.keyword_insights

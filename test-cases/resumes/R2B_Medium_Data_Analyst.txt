@@ -1,0 +1,21 @@
+SUMMARY
+Detail-oriented professional with experience in data entry and basic analysis. Skilled in Excel and reporting tools.
+
+SKILLS
+Microsoft Excel (Pivot Tables, VLOOKUP), SQL (Basic), Python
+Data Visualization, Microsoft Access
+Communication, Teamwork
+
+EXPERIENCE
+Reporting Specialist | Logistics Ltd
+- Used Excel to create weekly reports for the management team.
+- Wrote basic SQL queries to pull customer lists from the company database.
+- Created simple charts in PowerBI to show monthly delivery trends.
+- Communicated data findings to department heads during monthly meetings.
+- Cleaned messy datasets to ensure better report quality.
+
+Data Entry Clerk | Global Parts
+- Inputted inventory data into the system with high speed and accuracy.
+
+EDUCATION
+Associate Degree in Business

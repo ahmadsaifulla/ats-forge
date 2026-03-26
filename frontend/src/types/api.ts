@@ -24,11 +24,21 @@ export interface AnalysisResponse {
   missing_keywords: string[];
   matched_keywords: string[];
   suggestions: string[];
+  keyword_insights: {
+    exact_keywords: string[];
+    normalized_keywords: string[];
+    inferred_skills: string[];
+    missing_skills: string[];
+    skill_frequencies: Record<string, number>;
+    stuffing_penalty: number;
+  };
 }
 
 export interface OptimizedResumeSection {
   title: string;
   content: string[];
+  labels?: Array<"Rewritten content" | "Suggested additions">;
+  items?: Array<{ label: "Rewritten content" | "Suggested additions"; text: string }>;
 }
 
 export interface OptimizedResume {

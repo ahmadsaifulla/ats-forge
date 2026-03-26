@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+backend/.venv311/
 
 # Frontend
 frontend/node_modules/

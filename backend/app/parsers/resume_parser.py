@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from app.models.schemas import ParsedResume
 from app.parsers.docx_parser import DOCXResumeParser
 from app.parsers.pdf_parser import PDFResumeParser
 from app.utils.errors import ParsingError
-from app.utils.text import extract_sections
+from app.utils.text import expand_abbreviations, extract_sections, normalize_text
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeParserService:
@@ -29,13 +32,24 @@ class ResumeParserService:
             raise ParsingError("Unsupported file type. Please upload a PDF or DOCX resume.")
 
         parser, detected_type = parser_entry
-        text = parser.parse(file_path)
+        text = normalize_text(expand_abbreviations(parser.parse(file_path)))
         sections = extract_sections(text)
         warnings: list[str] = []
         if "skills" not in sections:
             warnings.append("Skills section was not explicitly detected.")
         if "experience" not in sections:
             warnings.append("Experience section was not explicitly detected.")
+        if "education" not in sections:
+            warnings.append("Education section was not explicitly detected.")
+        logger.info(
+            "resume_parsed",
+            extra={
+                "resume_id": resume_id,
+                "source_filename": original_filename,
+                "detected_type": detected_type,
+                "warnings": warnings,
+            },
+        )
 
         return ParsedResume(
             resume_id=resume_id,

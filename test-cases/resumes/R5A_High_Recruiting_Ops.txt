@@ -1,0 +1,21 @@
+SUMMARY
+Recruiting Operations professional with 5 years of experience optimizing Talent Acquisition workflows and Applicant Tracking System (ATS) performance.
+
+SKILLS
+Systems: Greenhouse, Workday, Lever, Salesforce
+Analysis: SQL, Tableau, Advanced Excel
+Skills: Process Mapping, Project Management, Data Privacy
+
+EXPERIENCE
+Recruiting Ops Manager | Global Talent Co
+- Overhauled the Greenhouse Applicant Tracking System (ATS) configuration, increasing hiring velocity by 20%.
+- Utilized SQL to extract pipeline data and created Tableau dashboards for the VP of Talent.
+- Conducted end-to-end Process Mapping for the interview lifecycle, reducing candidate time-in-stage by 3 days.
+- Managed confidentiality of sensitive salary and candidate data for executive-level searches.
+
+Talent Coordinator | Tech Growth
+- Documented 15+ recruitment processes to ensure consistency across global hiring teams.
+- Assisted in the migration of data from Lever to Workday.
+
+EDUCATION
+B.A. in Human Resources

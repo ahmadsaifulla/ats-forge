@@ -9,6 +9,12 @@ export function saveState<T>(key: keyof typeof KEYS, value: T) {
   localStorage.setItem(KEYS[key], JSON.stringify(value));
 }
 
+export function clearState(...keys: Array<keyof typeof KEYS>) {
+  for (const key of keys) {
+    localStorage.removeItem(KEYS[key]);
+  }
+}
+
 export function loadState<T>(key: keyof typeof KEYS): T | null {
   const rawValue = localStorage.getItem(KEYS[key]);
   if (!rawValue) {

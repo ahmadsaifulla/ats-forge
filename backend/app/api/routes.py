@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from io import BytesIO
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 
 from app.api.dependencies import get_resume_workflow_service
 from app.models.schemas import (
@@ -14,7 +16,6 @@ from app.models.schemas import (
     ResumeUploadResponse,
 )
 from app.services.resume_service import ResumeWorkflowService
-from app.utils.errors import ATSForgeError
 
 router = APIRouter()
 
@@ -30,10 +31,7 @@ async def upload_resume(
 ) -> ResumeUploadResponse:
     """Upload and parse a resume file."""
 
-    try:
-        return await service.upload_resume(file)
-    except ATSForgeError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return await service.upload_resume(file)
 
 
 @router.post(
@@ -47,11 +45,7 @@ async def analyze_resume(
 ):
     """Analyze ATS score for a stored resume."""
 
-    try:
-        return service.analyze(payload)
-    except ATSForgeError as exc:
-        status_code = status.HTTP_404_NOT_FOUND if "not found" in str(exc).lower() else status.HTTP_400_BAD_REQUEST
-        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+    return service.analyze(payload)
 
 
 @router.post(
@@ -65,11 +59,7 @@ async def optimize_resume(
 ) -> OptimizeResponse:
     """Optimize a resume for ATS alignment."""
 
-    try:
-        return service.optimize(payload)
-    except ATSForgeError as exc:
-        status_code = status.HTTP_404_NOT_FOUND if "not found" in str(exc).lower() else status.HTTP_400_BAD_REQUEST
-        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+    return service.optimize(payload)
 
 
 @router.get(
@@ -82,11 +72,16 @@ async def download_resume(
 ):
     """Download a generated optimized resume."""
 
-    path = service.storage_service.get_generated_document(document_id)
-    if path is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Optimized resume not found.")
-    return FileResponse(
-        path=path,
-        filename=f"optimized-resume-{document_id}.docx",
+    content = service.storage_service.pop_generated_document(document_id)
+    if content is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "reason": "Optimized resume not found."},
+        )
+    return StreamingResponse(
+        BytesIO(content),
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": f'attachment; filename="optimized-resume-{document_id}.docx"'
+        },
     )

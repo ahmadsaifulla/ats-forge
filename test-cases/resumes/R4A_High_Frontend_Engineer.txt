@@ -1,0 +1,21 @@
+SUMMARY
+Senior Frontend Engineer with 7 years of experience building high-performance web applications. Expert in React, TypeScript, and accessible UI design.
+
+SKILLS
+Frontend: React.js, TypeScript, Next.js, Redux
+Styling: Tailwind CSS, CSS-in-JS, Styled Components
+Tools: Web Accessibility (A11y), Jest, Cypress, Vite
+
+EXPERIENCE
+Lead Frontend Developer | Interface Pro
+- Re-architected the core web platform using Next.js and SSR, improving Largest Contentful Paint (LCP) by 45%.
+- Developed a comprehensive Design System and Component Library utilized by 4 different product teams.
+- Audited and remediated the entire application for Web Accessibility (A11y), achieving 100% WCAG 2.1 AA compliance.
+- Mentored 5 developers on TypeScript best practices and advanced React patterns.
+
+Frontend Engineer | Creative Web
+- Implemented complex State Management solutions using Redux, reducing unnecessary re-renders by 20%.
+- Integrated automated UI testing with Cypress to reduce regression bugs.
+
+EDUCATION
+B.F.A. in Graphic Design & Computer Science

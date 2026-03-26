@@ -1,32 +1,87 @@
 import { ArrowRight, FileWarning, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { KeywordPills } from "../components/KeywordPills";
 import { ScoreBars } from "../components/ScoreBars";
 import { StatCard } from "../components/StatCard";
-import { loadState, saveState } from "../lib/storage";
+import { clearState, loadState, saveState } from "../lib/storage";
 import { analyzeResume, optimizeResume } from "../services/api";
 import type { AnalysisResponse, ParsedResume, OptimizeResponse } from "../types/api";
 
+const DEMO_RESUME: ParsedResume = {
+  resume_id: "demo-resume-1",
+  filename: "ahmad_saifullah_resume.pdf",
+  text: "",
+  sections: {
+    skills: "Python, FastAPI, SQL, Docker, OOP, C/C++, REST APIs, Data Structures",
+    experience:
+      "Built backend APIs and optimized applicant review workflows for internal hiring tools.\nImproved recruiter turnaround by 35% and reduced manual screening effort across the pipeline.",
+    education: "BS Computer Science",
+  },
+  detected_file_type: "pdf",
+  warnings: [],
+};
+
+const DEMO_ANALYSIS: AnalysisResponse = {
+  resume_id: "demo-resume-1",
+  total_score: 82,
+  breakdown: {
+    keyword_score: 88,
+    semantic_score: 79,
+    structure_score: 86,
+  },
+  missing_keywords: ["backend engineering", "problem solving", "scalable systems"],
+  matched_keywords: ["python", "c++", "object oriented programming", "application programming interfaces"],
+  suggestions: [
+    "Strengthen the summary with explicit backend engineering language aligned to the target role.",
+    "Keep quantified backend impact statements near the top of experience.",
+    "Add scalable systems or performance work only if it is genuinely supported by prior projects.",
+  ],
+  keyword_insights: {
+    exact_keywords: ["python", "c++", "object oriented programming"],
+    normalized_keywords: ["python", "c++", "object oriented programming", "application programming interfaces"],
+    inferred_skills: ["object oriented programming", "data analysis"],
+    missing_skills: ["backend engineering", "problem solving", "scalable systems"],
+    skill_frequencies: {
+      python: 2,
+      "c++": 1,
+      "object oriented programming": 1,
+      "application programming interfaces": 1,
+    },
+    stuffing_penalty: 0,
+  },
+};
+
 export function AnalysisPage() {
   const navigate = useNavigate();
-  const [resume] = useState<ParsedResume | null>(() => loadState("resume"));
-  const [jobDescription] = useState<string>(() => loadState("jobDescription") ?? "");
-  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(() => loadState("analysis"));
+  const location = useLocation();
+  const isDemoMode = new URLSearchParams(location.search).get("demo") === "1";
+  const [resume] = useState<ParsedResume | null>(() => (isDemoMode ? DEMO_RESUME : loadState("resume")));
+  const [jobDescription] = useState<string>(() =>
+    isDemoMode
+      ? "We are hiring a backend engineer with strong object oriented programming fundamentals, Python, C/C++, API design, problem solving, and scalable systems experience."
+      : (loadState("jobDescription") ?? ""),
+  );
+  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(() => (isDemoMode ? DEMO_ANALYSIS : loadState("analysis")));
   const [isLoading, setIsLoading] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) {
+      return;
+    }
     if (!resume || !jobDescription) {
       navigate("/", { replace: true });
       return;
     }
 
-    if (analysis) {
+    if (analysis && analysis.resume_id === resume.resume_id) {
       return;
     }
 
+    clearState("analysis", "optimized");
+    setAnalysis(null);
     setIsLoading(true);
     analyzeResume(resume.resume_id, jobDescription)
       .then((response) => {
@@ -35,10 +90,14 @@ export function AnalysisPage() {
       })
       .catch((error: Error) => setErrorMessage(error.message))
       .finally(() => setIsLoading(false));
-  }, [analysis, jobDescription, navigate, resume]);
+  }, [analysis, isDemoMode, jobDescription, navigate, resume]);
 
   async function handleOptimize() {
     if (!resume) return;
+    if (isDemoMode) {
+      navigate("/optimized?demo=1");
+      return;
+    }
 
     setIsOptimizing(true);
     setErrorMessage(null);

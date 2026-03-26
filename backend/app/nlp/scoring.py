@@ -6,9 +6,17 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 
-from app.models.schemas import AnalysisResponse, ScoreBreakdown
+from app.models.schemas import AnalysisResponse, KeywordInsights, ScoreBreakdown
 from app.nlp.model_manager import get_sentence_transformer, get_spacy_model
-from app.utils.text import extract_bullets, extract_keywords, measurable_achievement_count
+from app.utils.text import (
+    expand_abbreviations,
+    extract_bullets,
+    extract_keywords,
+    infer_semantic_skills,
+    keyword_frequency,
+    measurable_achievement_count,
+    normalize_keyword,
+)
 
 try:  # pragma: no cover - exercised indirectly when dependency exists
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -36,7 +44,7 @@ class ATSScoringService:
     def analyze(self, resume_id: str, resume_text: str, job_description: str) -> AnalysisResponse:
         """Run complete ATS analysis."""
 
-        keyword_score, matched_keywords, missing_keywords = self._keyword_score(
+        keyword_score, matched_keywords, missing_keywords, keyword_insights = self._keyword_score(
             resume_text,
             job_description,
         )
@@ -59,14 +67,15 @@ class ATSScoringService:
             missing_keywords=missing_keywords,
             matched_keywords=matched_keywords,
             suggestions=suggestions,
+            keyword_insights=keyword_insights,
         )
 
     def _keyword_score(
         self,
         resume_text: str,
         job_description: str,
-    ) -> tuple[float, list[str], list[str]]:
-        """Compute TF-IDF cosine similarity and keyword gaps."""
+    ) -> tuple[float, list[str], list[str], KeywordInsights]:
+        """Compute deterministic keyword overlap, context, and stuffing penalties."""
 
         if TfidfVectorizer is not None and cosine_similarity is not None:
             vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english")
@@ -75,11 +84,41 @@ class ATSScoringService:
         else:
             similarity = self._token_overlap_similarity(resume_text, job_description)
 
-        jd_keywords = extract_keywords(job_description)
-        resume_lower = resume_text.lower()
-        matched = [keyword for keyword in jd_keywords if keyword in resume_lower]
-        missing = [keyword for keyword in jd_keywords if keyword not in resume_lower][:15]
-        return similarity * 100, matched[:15], missing
+        jd_keywords = extract_keywords(expand_abbreviations(job_description))
+        normalized_job_keywords = [normalize_keyword(keyword) for keyword in jd_keywords]
+        normalized_resume_text = normalize_keyword(resume_text)
+        exact_matches = [keyword for keyword in jd_keywords if keyword.lower() in resume_text.lower()]
+        normalized_matches = [
+            keyword for keyword in normalized_job_keywords if keyword and keyword in normalized_resume_text
+        ]
+        missing = [
+            keyword for keyword in normalized_job_keywords if keyword and keyword not in set(normalized_matches)
+        ][:15]
+        frequencies = keyword_frequency(resume_text, normalized_job_keywords)
+        stuffing_penalty = self._keyword_stuffing_penalty(frequencies)
+        contextual_score = self._contextual_keyword_score(resume_text, normalized_matches)
+        overlap_ratio = len(set(normalized_matches)) / max(1, len(set(normalized_job_keywords)))
+        exact_ratio = len(set(exact_matches)) / max(1, len(set(jd_keywords)))
+        keyword_score = min(
+            100.0,
+            max(
+                0.0,
+                (similarity * 35)
+                + (overlap_ratio * 45)
+                + (exact_ratio * 15)
+                + contextual_score
+                - stuffing_penalty,
+            ),
+        )
+        keyword_insights = KeywordInsights(
+            exact_keywords=sorted(set(exact_matches))[:15],
+            normalized_keywords=sorted(set(normalized_matches))[:20],
+            inferred_skills=sorted(set(infer_semantic_skills(job_description))),
+            missing_skills=missing,
+            skill_frequencies=frequencies,
+            stuffing_penalty=round(stuffing_penalty, 2),
+        )
+        return keyword_score, sorted(set(normalized_matches))[:15], missing, keyword_insights
 
     def _semantic_score(self, resume_text: str, job_description: str) -> float:
         """Compute semantic similarity using sentence-transformers with a fallback."""
@@ -133,6 +172,28 @@ class ATSScoringService:
             suggestions.append("Resume structure is ATS-friendly; focus next on targeted keyword alignment.")
 
         return final_score, suggestions
+
+    def _keyword_stuffing_penalty(self, frequencies: dict[str, int]) -> float:
+        """Penalize excessive keyword repetition."""
+
+        penalty = 0.0
+        for count in frequencies.values():
+            if count > 5:
+                penalty += (count - 5) * 2.5
+        return min(20.0, penalty)
+
+    def _contextual_keyword_score(self, resume_text: str, normalized_matches: list[str]) -> float:
+        """Reward matched keywords that appear in meaningful sentence context."""
+
+        sentences = re.split(r"[.\n]+", resume_text)
+        contextual_hits = 0
+        for sentence in sentences:
+            normalized_sentence = normalize_keyword(sentence)
+            if len(normalized_sentence.split()) < 4:
+                continue
+            if any(keyword in normalized_sentence for keyword in normalized_matches):
+                contextual_hits += 1
+        return min(10.0, contextual_hits * 1.5)
 
 
     @staticmethod

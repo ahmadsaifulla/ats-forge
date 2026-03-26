@@ -20,8 +20,8 @@ function getNetworkErrorMessage(error: unknown): string {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ detail: "Request failed." }));
-    throw new Error(errorBody.detail ?? "Request failed.");
+    const errorBody = await response.json().catch(() => ({ reason: "Request failed." }));
+    throw new Error(errorBody.reason ?? errorBody.detail ?? "Request failed.");
   }
   return response.json() as Promise<T>;
 }

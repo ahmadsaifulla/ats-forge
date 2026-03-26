@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import UploadFile
 
 from app.models.schemas import AnalyzeRequest, OptimizeResponse, ResumeUploadResponse
@@ -10,7 +12,9 @@ from app.parsers.resume_parser import ResumeParserService
 from app.services.optimizer_service import ResumeOptimizerService
 from app.services.repository import ResumeRepository
 from app.services.storage_service import StorageService
-from app.utils.errors import FileStorageError, ParsingError
+from app.utils.errors import NotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeWorkflowService:
@@ -33,34 +37,46 @@ class ResumeWorkflowService:
     async def upload_resume(self, file: UploadFile) -> ResumeUploadResponse:
         """Save and parse an uploaded resume."""
 
-        resume_id, path = await self.storage_service.save_upload(file)
-        parsed_resume = self.parser_service.parse(resume_id, path, file.filename or path.name)
-        self.repository.save(parsed_resume)
-        return ResumeUploadResponse(resume=parsed_resume)
+        resume_id, path = await self.storage_service.create_temp_upload(file)
+        try:
+            parsed_resume = self.parser_service.parse(resume_id, path, file.filename or path.name)
+            self.repository.save(parsed_resume)
+            logger.info(
+                "resume_upload_success",
+                extra={"resume_id": resume_id, "upload_name": file.filename or path.name},
+            )
+            return ResumeUploadResponse(resume=parsed_resume)
+        finally:
+            self.storage_service.delete_temp_upload(path)
 
     def analyze(self, payload: AnalyzeRequest):
         """Analyze a stored resume against a job description."""
 
         resume = self.repository.get(payload.resume_id)
         if resume is None:
-            stored_path = self.storage_service.get_upload_path(payload.resume_id)
-            if stored_path is None:
-                raise FileStorageError("Resume not found. Please upload the resume again.")
-            resume = self.parser_service.parse(payload.resume_id, stored_path, stored_path.name)
-            self.repository.save(resume)
+            raise NotFoundError("Resume not found. Please upload the resume again.")
 
-        return self.scoring_service.analyze(
+        analysis = self.scoring_service.analyze(
             resume.resume_id,
             resume.text,
             payload.job_description,
         )
+        logger.info(
+            "resume_analysis_complete",
+            extra={
+                "resume_id": resume.resume_id,
+                "total_score": analysis.total_score,
+                "breakdown": analysis.breakdown.model_dump(),
+            },
+        )
+        return analysis
 
     def optimize(self, payload: AnalyzeRequest) -> OptimizeResponse:
         """Optimize a stored resume for the supplied job description."""
 
         resume = self.repository.get(payload.resume_id)
         if resume is None:
-            raise ParsingError("Resume must be uploaded before optimization.")
+            raise NotFoundError("Resume must be uploaded before optimization.")
 
         original_analysis = self.scoring_service.analyze(
             resume.resume_id,

@@ -13,11 +13,12 @@ def test_optimizer_preserves_truthful_structure(sample_resume_text: str):
         ["analytics", "stakeholder communication"],
     )
 
-    assert optimized_resume.sections[0].title == "Professional Summary"
+    assert optimized_resume.sections[0].title == "SUMMARY"
     assert "stakeholder communication" in optimized_resume.plain_text.lower()
     assert "inventing new experience" not in optimized_resume.plain_text.lower()
     assert "target role keywords to incorporate where accurate" not in optimized_resume.plain_text.lower()
-    assert any(section.title == "Core Competencies" for section in optimized_resume.sections)
+    assert any(section.title == "SKILLS" for section in optimized_resume.sections)
+    assert any(item.label == "Rewritten content" for item in optimized_resume.sections[0].items)
 
 
 def test_optimizer_rewrites_weak_bullets_into_action_oriented_lines():
@@ -37,6 +38,8 @@ Experience
         ["applicant tracking", "communication"],
     )
 
-    experience_section = next(section for section in optimized_resume.sections if section.title == "Professional Experience")
+    experience_section = next(section for section in optimized_resume.sections if section.title == "EXPERIENCE")
     assert experience_section.content[0].startswith(("Delivered", "Drove", "Led", "Managed", "Coordinated"))
     assert "responsible for" not in " ".join(experience_section.content).lower()
+    suggestions_section = next(section for section in optimized_resume.sections if section.title == "SUGGESTED ADDITIONS")
+    assert all(label == "Suggested additions" for label in suggestions_section.labels)

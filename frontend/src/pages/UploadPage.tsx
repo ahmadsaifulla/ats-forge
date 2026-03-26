@@ -1,21 +1,33 @@
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Dropzone } from "../components/Dropzone";
+import { clearState } from "../lib/storage";
 import { uploadResume } from "../services/api";
 import { saveState } from "../lib/storage";
 
 export function UploadPage() {
   const navigate = useNavigate();
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [jobDescription, setJobDescription] = useState("");
+  const location = useLocation();
+  const isDemoMode = new URLSearchParams(location.search).get("demo") === "1";
+  const [fileName, setFileName] = useState<string | null>(isDemoMode ? "ahmad_saifullah_resume.pdf" : null);
+  const [jobDescription, setJobDescription] = useState(
+    isDemoMode
+      ? "We are hiring a backend engineer with strong object oriented programming fundamentals, Python, C/C++, API design, problem solving, and scalable systems experience."
+      : "",
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleFile(file: File) {
+    if (isDemoMode) {
+      navigate("/analysis?demo=1");
+      return;
+    }
     setErrorMessage(null);
     setIsLoading(true);
     setFileName(file.name);
+    clearState("analysis", "optimized");
 
     try {
       const response = await uploadResume(file);
@@ -28,11 +40,16 @@ export function UploadPage() {
   }
 
   function handleContinue() {
+    if (isDemoMode) {
+      navigate("/analysis?demo=1");
+      return;
+    }
     if (!jobDescription.trim()) {
       setErrorMessage("Paste a job description before continuing.");
       return;
     }
 
+    clearState("analysis", "optimized");
     saveState("jobDescription", jobDescription);
     navigate("/analysis");
   }

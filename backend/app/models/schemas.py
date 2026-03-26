@@ -19,6 +19,17 @@ class ParsedResume(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class KeywordInsights(BaseModel):
+    """Keyword and skill extraction details."""
+
+    exact_keywords: list[str]
+    normalized_keywords: list[str]
+    inferred_skills: list[str]
+    missing_skills: list[str]
+    skill_frequencies: dict[str, int]
+    stuffing_penalty: float
+
+
 class ResumeUploadResponse(BaseModel):
     """Response returned after resume upload."""
 
@@ -59,6 +70,14 @@ class AnalysisResponse(BaseModel):
     missing_keywords: list[str]
     matched_keywords: list[str]
     suggestions: list[str]
+    keyword_insights: KeywordInsights
+
+
+class OptimizedContentLine(BaseModel):
+    """A labeled optimized output line."""
+
+    label: Literal["Rewritten content", "Suggested additions"]
+    text: str
 
 
 class OptimizedResumeSection(BaseModel):
@@ -66,6 +85,8 @@ class OptimizedResumeSection(BaseModel):
 
     title: str
     content: list[str]
+    labels: list[Literal["Rewritten content", "Suggested additions"]] = Field(default_factory=list)
+    items: list[OptimizedContentLine] = Field(default_factory=list)
 
 
 class OptimizedResume(BaseModel):
@@ -90,4 +111,5 @@ class OptimizeResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """Error envelope."""
 
-    detail: str
+    error: str
+    reason: str

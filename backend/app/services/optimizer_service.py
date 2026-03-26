@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from docx import Document
 
-from app.models.schemas import OptimizedResume, OptimizedResumeSection
+from app.models.schemas import OptimizedContentLine, OptimizedResume, OptimizedResumeSection
 from app.utils.errors import OptimizationError
 from app.utils.text import extract_bullets, extract_keywords, extract_sections, measurable_achievement_count
 
@@ -103,19 +103,23 @@ class ResumeOptimizerService:
             role_keywords=role_keywords,
             safe_keywords=safe_keywords,
         )
-        optimized.append(OptimizedResumeSection(title="Professional Summary", content=summary_lines))
+        optimized.append(self._build_section("SUMMARY", summary_lines, label="Rewritten content"))
 
         skills_content = self._optimize_skills(sections.get("skills", ""), safe_keywords)
         if skills_content:
-            optimized.append(OptimizedResumeSection(title="Core Competencies", content=skills_content))
+            optimized.append(self._build_section("SKILLS", skills_content, label="Rewritten content"))
 
         experience_content = self._optimize_experience(sections.get("experience", "") or sections.get("other", ""))
         if experience_content:
-            optimized.append(OptimizedResumeSection(title="Professional Experience", content=experience_content))
+            optimized.append(self._build_section("EXPERIENCE", experience_content, label="Rewritten content"))
 
         education_content = self._normalize_paragraphs(sections.get("education", ""))
         if education_content:
-            optimized.append(OptimizedResumeSection(title="Education", content=education_content))
+            optimized.append(self._build_section("EDUCATION", education_content, label="Rewritten content"))
+
+        suggested_additions = self._build_suggested_additions(missing_keywords)
+        if suggested_additions:
+            optimized.append(self._build_section("SUGGESTED ADDITIONS", suggested_additions, label="Suggested additions"))
 
         return optimized
 
@@ -176,6 +180,14 @@ class ResumeOptimizerService:
                 seen.add(lowered)
         return ordered[:16]
 
+    def _build_suggested_additions(self, missing_keywords: list[str]) -> list[str]:
+        """Create honest gap suggestions without asserting unsupported experience."""
+
+        return [
+            f"Add {keyword} only if it is genuinely supported by your experience, projects, certifications, or training."
+            for keyword in missing_keywords[:8]
+        ]
+
     def _optimize_experience(self, experience_text: str) -> list[str]:
         """Rewrite bullets with clearer action-oriented phrasing."""
 
@@ -196,6 +208,22 @@ class ResumeOptimizerService:
         """Split freeform text into clean paragraph lines."""
 
         return [line.strip() for line in text.splitlines() if line.strip()]
+
+    def _build_section(
+        self,
+        title: str,
+        lines: list[str],
+        *,
+        label: str,
+    ) -> OptimizedResumeSection:
+        """Create a labeled section for the API response."""
+
+        return OptimizedResumeSection(
+            title=title,
+            content=lines,
+            labels=[label for _ in lines],
+            items=[OptimizedContentLine(label=label, text=line) for line in lines],
+        )
 
     def _select_grounded_keywords(
         self,
@@ -272,7 +300,7 @@ class ResumeOptimizerService:
             document = Document()
             for section in sections:
                 document.add_heading(section.title, level=1)
-                if section.title in {"Professional Summary", "Education"} and len(section.content) == 1:
+                if section.title in {"SUMMARY", "EDUCATION"} and len(section.content) == 1:
                     document.add_paragraph(section.content[0])
                 else:
                     for item in section.content:
